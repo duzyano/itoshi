@@ -1,0 +1,188 @@
+:root {
+  --orange: #ff7520;
+  --light-orange: #ffb181;
+  --green: #8cd003;
+  --light-green: #deff78;
+  --dark-blue: #053631;
+  --bg: linear-gradient(180deg, rgba(222, 255, 120, 0.08), rgba(140, 208, 3, 0.02));
+}
+
+/* Renos-Rough (fonts are in ../renos-rough-font/) */
+@font-face {
+  font-family: 'Renos-Rough';
+  src: url('fonts/renos-rough-webfont.woff2') format('woff2'),
+       url('fonts/renos-rough-webfont.woff') format('woff'),
+       url('fonts/renos-rough.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans', system-ui, -apple-system, 'Segoe UI', Roboto, "Helvetica Neue", Arial;
+  color: var(--dark-blue);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero {
+  text-align: center;
+  max-width: 760px;
+  padding: 48px 24px;
+}
+
+/* Logo/leaf container */
+.logo-wrap {
+  position: relative;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaf {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-grid;
+  place-items: center;
+  box-shadow: 0 8px 24px rgba(5, 54, 49, 0.08);
+  transform-origin: center center;
+  animation: leafToLogo 2.4s cubic-bezier(.2, .9, .2, 1) forwards;
+}
+
+.leaf svg {
+  width: 56px;
+  height: 56px;
+  display: block;
+}
+
+@keyframes leafToLogo {
+  0% {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1
+  }
+
+  35% {
+    transform: translateY(-18px) scale(1.08) rotate(-6deg)
+  }
+
+  65% {
+    transform: translateY(-120px) scale(2.4) rotate(-10deg);
+  }
+
+  85% {
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(-160px) scale(0.06);
+    opacity: 0;
+  }
+}
+
+/* Image that replaces/augments the leaf during animation */
+.logo-img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.9) rotate(0deg);
+  opacity: 0;
+  pointer-events: none;
+  animation: logoImgPop 2.4s cubic-bezier(.2, .9, .2, 1) forwards;
+}
+
+@keyframes logoImgPop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.9) rotate(0deg);
+    opacity: 0;
+  }
+  35% {
+    transform: translate(-50%, -58%) scale(1.08) rotate(-6deg);
+    opacity: 1;
+  }
+  65% {
+    transform: translate(-50%, -120%) scale(1.12) rotate(-10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -140%) scale(0.9) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.logo-visible .logo-img {
+  opacity: 1;
+}
+
+/* Logo text that appears after the leaf animation */
+.logo-text {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: revealText .5s ease-out 2.2s forwards;
+}
+
+@keyframes revealText {
+  to {
+    opacity: 1;
+    transform: none
+  }
+}
+
+h1 {
+  font-family: 'Renos-Rough', 'Noto Sans', serif;
+  font-size: 44px;
+  margin: 18px 0 6px;
+  color: var(--orange);
+  line-height: 1.05
+}
+
+p.lead {
+  margin: 0 0 22px;
+  color: var(--green)
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 18px;
+  background: var(--orange);
+  color: #fff;
+  padding: 16px 28px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(5, 54, 49, 0.06);
+  text-decoration: none;
+  font-weight: 600
+}
+
+footer {
+  margin-top: 26px;
+  font-size: 13px;
+  color: rgba(5, 54, 49, 0.55)
+}
+
+/* Responsive tweaks */
+@media (max-width:520px) {
+  h1 {
+    font-size: 32px
+  }
+
+  .leaf {
+    width: 76px;
+    height: 76px
+  }
+}
