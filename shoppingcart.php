@@ -74,8 +74,14 @@ $dips = array_filter($all_products, function($p) {
           <span>Totaal:</span>
           <span id="total">€0.00</span>
         </div>
-        <a href="menu.php" class="continue-shopping" style="display:block; text-align:center; margin-bottom:12px;">Verder bestellen</a>
-        <button class="checkout-btn">Afrekenen</button>
+        <form id="checkout-form" method="post" action="order_review.php">
+          <input type="hidden" name="cart_json" id="cart-json" value="">
+          <input type="hidden" name="subtotal" id="form-subtotal" value="">
+          <input type="hidden" name="delivery" id="form-delivery" value="">
+          <input type="hidden" name="total" id="form-total" value="">
+          <a href="menu.php" class="continue-shopping" style="display:block; text-align:center; margin-bottom:12px;">Verder bestellen</a>
+          <button type="button" id="checkout-btn" class="checkout-btn">Afrekenen</button>
+        </form>
       </div>
     </div>
 
@@ -91,7 +97,104 @@ $dips = array_filter($all_products, function($p) {
   </main>
 
   <?php include 'includes/footer.php'; ?>
-    <script src="assets/cart.js"></script>
+
+  <script>
+    const cartKey = 'hh_cart_v1';
+    const upsellingSuggestions = {
+      'Oven-Baked Sweet Potato Wedges': ['Avocado Lime Crema','Peanut Sauce'],
+      'French Fries': ['Avocado Lime Crema','Peanut Sauce'],
+      'Spring Rolls': ['Peanut Sauce','Sweet Chili Sauce']
+    };
+
+    const allProducts = <?php echo json_encode($all_products); ?>;
+
+    function loadCart() {
+      try { return JSON.parse(localStorage.getItem(cartKey)) || []; } catch (e) { return []; }
+    }
+
+    function saveCart(items) {
+      localStorage.setItem(cartKey, JSON.stringify(items));
+      renderCart();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (m) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[m]; });
+    }
+
+    function renderCart() {
+      const items = loadCart();
+      const cartList = document.getElementById('cart-list');
+      if (!cartList) return;
+      if (items.length === 0) {
+        cartList.innerHTML = `\n          <div class="empty-cart">\n            <p>Je winkelwagen is leeg</p>\n            <a href="menu.php" class="continue-shopping">Terug naar menu</a>\n          </div>\n        `;
+        document.getElementById('upsell-container').style.display = 'none';
+        updateSummary(items);
+        return;
+      }
+
+      cartList.innerHTML = '';
+      items.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'cart-item-row';
+        div.innerHTML = `\n          <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">\n          <div class="cart-item-details">\n            <h4>${escapeHtml(item.name)}</h4>\n            <span class="price">€${Number(item.price).toFixed(2)}</span>\n          </div>\n          <button class="remove-btn" data-idx="${idx}">✕</button>\n        `;
+        cartList.appendChild(div);
+        div.querySelector('.remove-btn').addEventListener('click', function () {
+          const items = loadCart();
+          items.splice(idx,1);
+          saveCart(items);
+        });
+      });
+
+      updateSummary(items);
+      renderUpselling(items);
+    }
+
+    function updateSummary(items) {
+      const subtotal = items.reduce((sum, it) => sum + Number(it.price), 0);
+      const delivery = subtotal > 0 ? 3.99 : 0;
+      const total = subtotal + delivery;
+      document.getElementById('subtotal').textContent = '€' + subtotal.toFixed(2);
+      document.getElementById('delivery').textContent = '€' + delivery.toFixed(2);
+      document.getElementById('total').textContent = '€' + total.toFixed(2);
+    }
+
+    function renderUpselling(cartItems) {
+      const cartItemNames = cartItems.map(i => i.name);
+      const suggestedNames = new Set();
+      cartItemNames.forEach(name => { if (upsellingSuggestions[name]) upsellingSuggestions[name].forEach(s => suggestedNames.add(s)); });
+      const suggestedProducts = allProducts.filter(p => suggestedNames.has(p.name) && !cartItemNames.includes(p.name));
+      if (suggestedProducts.length === 0) { document.getElementById('upsell-container').style.display = 'none'; return; }
+      document.getElementById('upsell-container').style.display = 'block';
+      const upsellItems = document.getElementById('upsell-items'); upsellItems.innerHTML = '';
+      suggestedProducts.forEach(product => {
+        const div = document.createElement('div'); div.className = 'upsell-item';
+        div.innerHTML = `\n          <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}">\n          <div class="upsell-item-name">${escapeHtml(product.name)}</div>\n          <div class="upsell-item-price">€${Number(product.price).toFixed(2)}</div>\n          <button class="upsell-add-btn">Add</button>\n        `;
+        upsellItems.appendChild(div);
+        div.querySelector('.upsell-add-btn').addEventListener('click', function () { const items = loadCart(); items.push({ name: product.name, price: product.price, image: product.image }); saveCart(items); });
+      });
+    }
+
+    // Initial render
+    renderCart();
+
+    // Checkout: prepare form and submit
+    (function (){
+      const btn = document.getElementById('checkout-btn');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        const items = loadCart();
+        if (!items || items.length === 0) { alert('Je winkelwagen is leeg. Voeg eerst items toe.'); return; }
+        const subtotal = items.reduce((s, it) => s + Number(it.price), 0);
+        const delivery = subtotal > 0 ? 3.99 : 0;
+        const total = subtotal + delivery;
+        document.getElementById('cart-json').value = JSON.stringify(items);
+        document.getElementById('form-subtotal').value = subtotal.toFixed(2);
+        document.getElementById('form-delivery').value = delivery.toFixed(2);
+        document.getElementById('form-total').value = total.toFixed(2);
+        document.getElementById('checkout-form').submit();
+      });
+    })();
+  </script>
 </body>
 
 </html>
