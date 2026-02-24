@@ -26,7 +26,7 @@
     <div class="logo-text">
       <h1>Welcome to Happy Herbivore</h1>
       <p class="lead">Delicious plant-based food, made fresh daily</p>
-      <a class="cta" href="#">Touch anywhere to start your order &#8594;</a>
+      <a class="cta" href="menu.php">Touch anywhere to start your order &#8594;</a>
       <footer>100% Plant-Based · Locally Sourced · Sustainable</footer>
     </div>
   </main>
