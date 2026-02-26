@@ -37,6 +37,57 @@ if ($fp) {
 }
 $orderNumber = '#' . str_pad((string) $last, 4, '0', STR_PAD_LEFT);
 
+// Save order to database (if connection available)
+$dbSaved = false;
+$dbError = '';
+$skippedItems = [];
+try {
+    require_once __DIR__ . '/connection.php';
+    if (isset($conn) && $conn instanceof PDO) {
+        $conn->beginTransaction();
+
+        $insertOrder = $conn->prepare('INSERT INTO orders (order_status_id, pickup_number, price_total, datetime) VALUES (:status, :pickup, :total, NOW())');
+        $status = 2; // 'Placed and paid' as default
+        $pickup = (string) $last;
+        $insertOrder->execute([':status' => $status, ':pickup' => $pickup, ':total' => $total]);
+        $insertOrderId = $conn->lastInsertId();
+
+        $insertProduct = $conn->prepare('INSERT INTO order_product (order_id, product_id, price) VALUES (:order_id, :product_id, :price)');
+        foreach ($cart as $it) {
+            $productId = 0;
+            if (isset($it['id']))
+                $productId = intval($it['id']);
+            elseif (isset($it['product_id']))
+                $productId = intval($it['product_id']);
+            $price = isset($it['price']) ? floatval($it['price']) : 0.0;
+            if ($productId > 0) {
+                $insertProduct->execute([':order_id' => $insertOrderId, ':product_id' => $productId, ':price' => $price]);
+            } else {
+                // skip items without a valid product id to avoid FK constraint errors
+                $skippedItems[] = $it;
+            }
+        }
+        if (!empty($skippedItems)) {
+            try {
+                $log = date('c') . " - Skipped items for order {$insertOrderId}: " . json_encode($skippedItems) . PHP_EOL;
+                @file_put_contents($counterDir . '/order_error.log', $log, FILE_APPEND | LOCK_EX);
+            } catch (Exception $e) { }
+        }
+
+        $conn->commit();
+        $dbSaved = true;
+    }
+} catch (Exception $e) {
+    if (isset($conn) && $conn instanceof PDO && $conn->inTransaction()) {
+        try { $conn->rollBack(); } catch (Exception $_) { }
+    }
+    $dbError = $e->getMessage();
+}
+
+if (!$dbSaved && empty($dbError)) {
+    $dbError = 'Database connection not available or inserts skipped.';
+}
+
 ?>
 <!doctype html>
 <html lang="nl">
@@ -96,8 +147,16 @@ $orderNumber = '#' . str_pad((string) $last, 4, '0', STR_PAD_LEFT);
                     €<?php echo number_format($total, 2); ?></div>
             </div>
 
+            <?php if (defined('PHP_SAPI') && PHP_SAPI !== 'cli' && !$dbSaved): ?>
+                <div style="margin-top:12px; color:#c00; font-weight:700">Let op: bestelling niet opgeslagen in database.</div>
+                <div style="color:#666; font-size:0.9rem; margin-top:6px"><?php echo htmlspecialchars($dbError); ?></div>
+                <div style="color:#666; font-size:0.9rem; margin-top:6px">Logbestand: data/order_error.log</div>
+            <?php endif; ?>
+
             <div style="margin-top:20px">
-                <a href="home.php" style="text-decoration:none; display:inline-block; padding:12px 18px; border-radius:8px; background:#053631; color:#fff; font-weight:700">Terug naar start</a>
+                <a href="home.php"
+                    style="text-decoration:none; display:inline-block; padding:12px 18px; border-radius:8px; background:#053631; color:#fff; font-weight:700">Terug
+                    naar start</a>
             </div>
         </div>
     </main>
