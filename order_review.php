@@ -1,6 +1,8 @@
 <?php
 // order_review.php
 // Receives cart JSON via POST and displays a review screen before confirming
+include 'includes/language.php';
+
 $cartJson = $_POST['cart_json'] ?? '[]';
 $subtotal = isset($_POST['subtotal']) ? floatval($_POST['subtotal']) : 0.0;
 $delivery = isset($_POST['delivery']) ? floatval($_POST['delivery']) : 0.0;
@@ -12,12 +14,12 @@ if (!is_array($cart))
     $cart = [];
 ?>
 <!doctype html>
-<html lang="nl">
+<html lang="<?php echo $current_language; ?>">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Besteloverzicht - Happy Herbivore</title>
+    <title><?php echo t('order_review'); ?> - Happy Herbivore</title>
     <link rel="stylesheet" href="assets/menu.css">
     <style>
         .review-container {
@@ -71,9 +73,9 @@ if (!is_array($cart))
     <?php include 'includes/header.php'; ?>
     <main class="menu-main">
         <div class="review-container">
-            <h2>Controleer je bestelling</h2>
+            <h2><?php echo t('order_review'); ?></h2>
             <?php if (count($cart) === 0): ?>
-                <p>Je winkelwagen is leeg. <a href="menu.php">Terug naar het menu</a></p>
+                <p><?php echo t('empty_cart'); ?> <a href="menu.php"><?php echo t('back_to_menu'); ?></a></p>
             <?php else: ?>
                 <?php foreach ($cart as $it): ?>
                     <div class="review-item">
@@ -88,15 +90,15 @@ if (!is_array($cart))
 
                 <div style="margin-top:18px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <strong>Subtotaal</strong><span>€<?php echo number_format($subtotal, 2); ?></span></div>
+                        <strong><?php echo t('subtotal'); ?></strong><span>€<?php echo number_format($subtotal, 2); ?></span></div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <strong>Bezorgkosten</strong><span>€<?php echo number_format($delivery, 2); ?></span></div>
+                        <strong><?php echo t('delivery_cost'); ?></strong><span>€<?php echo number_format($delivery, 2); ?></span></div>
                     <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1.1rem;">
-                        <strong>Totaal</strong><span>€<?php echo number_format($total, 2); ?></span></div>
+                        <strong><?php echo t('total'); ?></strong><span>€<?php echo number_format($total, 2); ?></span></div>
                 </div>
 
                 <div class="review-actions">
-                    <button class="btn btn-back" onclick="window.history.back()">Terug</button>
+                    <button class="btn btn-back" onclick="window.history.back()"><?php echo t('back'); ?></button>
                     <form method="post" action="order_confirmation.php" style="margin:0">
                         <input type="hidden" name="cart_json"
                             value="<?php echo htmlspecialchars($cartJson, ENT_QUOTES); ?>">
@@ -106,13 +108,14 @@ if (!is_array($cart))
                             value="<?php echo htmlspecialchars(number_format($delivery, 2, '.', ''), ENT_QUOTES); ?>">
                         <input type="hidden" name="total"
                             value="<?php echo htmlspecialchars(number_format($total, 2, '.', ''), ENT_QUOTES); ?>">
-                        <button type="submit" class="btn btn-confirm">Bevestig bestelling</button>
+                        <button type="submit" class="btn btn-confirm"><?php echo t('confirm_order'); ?></button>
                     </form>
                 </div>
             <?php endif; ?>
         </div>
     </main>
     <?php include 'includes/footer.php'; ?>
+    <script src="assets/language.js"></script>
 </body>
 
 </html>

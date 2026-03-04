@@ -372,13 +372,18 @@ footer {
   background: var(--orange);
   color: #fff;
   border: none;
-  padding: 8px 12px;
+  /* make it occupy full card width for easier touch
+     and increase tap area */
+  padding: 12px 0;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
+  display: block;
+  width: 100%;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .add-btn:hover {

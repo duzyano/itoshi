@@ -1,5 +1,6 @@
+<?php include 'includes/language.php'; ?>
 <!doctype html>
-<html lang="nl">
+<html lang="<?php echo $current_language; ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -24,11 +25,12 @@
     </div>
 
     <div class="logo-text">
-      <h1>Welcome to Happy Herbivore</h1>
-      <p class="lead">Delicious plant-based food, made fresh daily</p>
-      <a class="cta" href="order_type.php">Touch anywhere to start your order &#8594;</a>
-      <footer>100% Plant-Based · Locally Sourced · Sustainable</footer>
+      <h1><?php echo t('welcome'); ?></h1>
+      <p class="lead"><?php echo t('subtitle'); ?></p>
+      <a class="cta" href="order_type.php"><?php echo t('cta'); ?> &#8594;</a>
+      <footer><?php echo t('footer_tagline'); ?></footer>
     </div>
   </main>
+  <script src="assets/language.js"></script>
 </body>
 </html>

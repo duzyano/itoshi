@@ -1,51 +1,18 @@
 <?php
-require_once 'connection.php';
+// shoppingcart.php - Products loaded from API via JavaScript
+include 'includes/language.php';
 
-// Get all products for upselling suggestions on the cart page
+// Placeholder for compatibility with cart.js
 $all_products = [];
-try {
-  $stmt = $conn->prepare(
-    "SELECT p.*, c.name AS category_name, i.filename AS image_filename
-     FROM products p
-     JOIN categories c ON p.category_id = c.category_id
-     LEFT JOIN images i ON p.image_id = i.image_id
-     ORDER BY c.name, p.name"
-  );
-  $stmt->execute();
-  $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-  foreach ($results as $row) {
-    $imageFilename = $row['image_filename'] ?? '';
-    if (!empty($imageFilename)) {
-      $imagePath = 'assets/images/' . $imageFilename;
-    } else {
-      $imagePath = 'assets/images/image.png';
-    }
-
-    $all_products[] = [
-      'name' => $row['name'],
-      'price' => $row['price'],
-      'image' => $imagePath,
-      'category' => $row['category_name'] ?? 'uncategorized'
-    ];
-  }
-} catch (PDOException $e) {
-  die("Fout bij ophalen producten: " . $e->getMessage());
-}
-
-// Get dips for upselling (common pairings)
-$dips = array_filter($all_products, function($p) {
-  return strtolower($p['category']) === 'dips';
-});
 ?>
 
 <!doctype html>
-<html lang="nl">
+<html lang="<?php echo $current_language; ?>">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Winkelwagen - Happy Herbivore</title>
+  <title><?php echo t('your_cart'); ?> - Happy Herbivore</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/menu.css">
   <link rel="stylesheet" href="assets/cart.css">
@@ -57,21 +24,21 @@ $dips = array_filter($all_products, function($p) {
   <main class="menu-main">
     <div class="cart-container">
       <div class="cart-items-section">
-        <h2>Jouw winkelwagen</h2>
+        <h2><?php echo t('your_cart'); ?></h2>
         <div id="cart-list"></div>
       </div>
 
       <div class="cart-summary">
         <div class="summary-row">
-          <span>Subtotaal:</span>
+          <span><?php echo t('subtotal'); ?></span>
           <span id="subtotal">€0.00</span>
         </div>
         <div class="summary-row">
-          <span>Bezorgkosten:</span>
+          <span><?php echo t('delivery_cost'); ?></span>
           <span id="delivery">€0.00</span>
         </div>
         <div class="summary-row total">
-          <span>Totaal:</span>
+          <span><?php echo t('total'); ?></span>
           <span id="total">€0.00</span>
         </div>
         <form id="checkout-form" method="post" action="order_review.php">
@@ -79,8 +46,8 @@ $dips = array_filter($all_products, function($p) {
           <input type="hidden" name="subtotal" id="form-subtotal" value="">
           <input type="hidden" name="delivery" id="form-delivery" value="">
           <input type="hidden" name="total" id="form-total" value="">
-          <a href="menu.php" class="continue-shopping" style="display:block; text-align:center; margin-bottom:12px;">Verder bestellen</a>
-          <button type="button" id="checkout-btn" class="checkout-btn">Afrekenen</button>
+          <a href="menu.php" class="continue-shopping" style="display:block; text-align:center; margin-bottom:12px;"><?php echo t('continue_shopping'); ?></a>
+          <button type="button" id="checkout-btn" class="checkout-btn"><?php echo t('checkout'); ?></button>
         </form>
       </div>
     </div>
@@ -89,7 +56,7 @@ $dips = array_filter($all_products, function($p) {
     <div class="cart-container" id="upsell-container" style="display: none;">
       <div style="grid-column: 1 / -1;">
         <div class="upsell-section">
-          <h3>✨ Suggesties om je bestelling compleet te maken</h3>
+          <h3><?php echo t('suggestions'); ?></h3>
           <div class="upsell-items" id="upsell-items"></div>
         </div>
       </div>
@@ -98,6 +65,7 @@ $dips = array_filter($all_products, function($p) {
 
   <?php include 'includes/footer.php'; ?>
 
+  <script src="assets/language.js"></script>
   <script>
     const cartKey = 'hh_cart_v1';
     const upsellingSuggestions = {
@@ -107,6 +75,7 @@ $dips = array_filter($all_products, function($p) {
     };
 
     const allProducts = <?php echo json_encode($all_products); ?>;
+    const currentLang = '<?php echo $current_language; ?>';
 
     function loadCart() {
       try { return JSON.parse(localStorage.getItem(cartKey)) || []; } catch (e) { return []; }
@@ -126,7 +95,12 @@ $dips = array_filter($all_products, function($p) {
       const cartList = document.getElementById('cart-list');
       if (!cartList) return;
       if (items.length === 0) {
-        cartList.innerHTML = `\n          <div class="empty-cart">\n            <p>Je winkelwagen is leeg</p>\n            <a href="menu.php" class="continue-shopping">Terug naar menu</a>\n          </div>\n        `;
+        cartList.innerHTML = `
+          <div class="empty-cart">
+            <p>${t('empty_cart', currentLang)}</p>
+            <a href="menu.php" class="continue-shopping">${t('back_to_menu', currentLang)}</a>
+          </div>
+        `;
         document.getElementById('upsell-container').style.display = 'none';
         updateSummary(items);
         return;
@@ -136,7 +110,14 @@ $dips = array_filter($all_products, function($p) {
       items.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = 'cart-item-row';
-        div.innerHTML = `\n          <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">\n          <div class="cart-item-details">\n            <h4>${escapeHtml(item.name)}</h4>\n            <span class="price">€${Number(item.price).toFixed(2)}</span>\n          </div>\n          <button class="remove-btn" data-idx="${idx}">✕</button>\n        `;
+        div.innerHTML = `
+          <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">
+          <div class="cart-item-details">
+            <h4>${escapeHtml(item.name)}</h4>
+            <span class="price">€${Number(item.price).toFixed(2)}</span>
+          </div>
+          <button class="remove-btn" data-idx="${idx}">✕</button>
+        `;
         cartList.appendChild(div);
         div.querySelector('.remove-btn').addEventListener('click', function () {
           const items = loadCart();
@@ -168,7 +149,12 @@ $dips = array_filter($all_products, function($p) {
       const upsellItems = document.getElementById('upsell-items'); upsellItems.innerHTML = '';
       suggestedProducts.forEach(product => {
         const div = document.createElement('div'); div.className = 'upsell-item';
-        div.innerHTML = `\n          <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}">\n          <div class="upsell-item-name">${escapeHtml(product.name)}</div>\n          <div class="upsell-item-price">€${Number(product.price).toFixed(2)}</div>\n          <button class="upsell-add-btn">Add</button>\n        `;
+        div.innerHTML = `
+          <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}">
+          <div class="upsell-item-name">${escapeHtml(product.name)}</div>
+          <div class="upsell-item-price">€${Number(product.price).toFixed(2)}</div>
+          <button class="upsell-add-btn">${t('add_to_cart', currentLang)}</button>
+        `;
         upsellItems.appendChild(div);
         div.querySelector('.upsell-add-btn').addEventListener('click', function () { const items = loadCart(); items.push({ name: product.name, price: product.price, image: product.image }); saveCart(items); });
       });
@@ -183,7 +169,7 @@ $dips = array_filter($all_products, function($p) {
       if (!btn) return;
       btn.addEventListener('click', function () {
         const items = loadCart();
-        if (!items || items.length === 0) { alert('Je winkelwagen is leeg. Voeg eerst items toe.'); return; }
+        if (!items || items.length === 0) { alert(t('empty_cart', currentLang)); return; }
         const subtotal = items.reduce((s, it) => s + Number(it.price), 0);
         const delivery = subtotal > 0 ? 3.99 : 0;
         const total = subtotal + delivery;

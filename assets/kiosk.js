@@ -129,72 +129,73 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Add button handler with animation
-  document.querySelectorAll('.add-btn').forEach(btn => {
-    btn.addEventListener('click', function (ev) {
-      const name = btn.dataset.name || 'Product';
-      const price = btn.dataset.price || 0;
-      const image = btn.dataset.image || 'assets/images/image.png';
+  // Add button handler with event delegation - works with dynamically loaded buttons
+  document.body.addEventListener('click', function (ev) {
+    const btn = ev.target.closest('.add-btn');
+    if (!btn) return;
 
-      // find product image to clone
-      const card = btn.closest('.product-card');
-      const img = card ? card.querySelector('img') : null;
-      let imgSrc = image;
-      if (img && img.src) imgSrc = img.src;
+    const name = btn.dataset.name || 'Product';
+    const price = btn.dataset.price || 0;
+    const image = btn.dataset.image || 'assets/images/image.png';
 
-      // create flying image
-      const flyer = document.createElement('img');
-      flyer.src = imgSrc;
-      flyer.className = 'flying-img';
-      document.body.appendChild(flyer);
+    // find product image to clone
+    const card = btn.closest('.product-card');
+    const img = card ? card.querySelector('img') : null;
+    let imgSrc = image;
+    if (img && img.src) imgSrc = img.src;
 
-      // position flyer at image/button
-      const startRect = (img && img.getBoundingClientRect()) || btn.getBoundingClientRect();
-      flyer.style.left = startRect.left + 'px';
-      flyer.style.top = startRect.top + 'px';
-      flyer.style.width = startRect.width + 'px';
-      flyer.style.height = startRect.height + 'px';
+    // create flying image
+    const flyer = document.createElement('img');
+    flyer.src = imgSrc;
+    flyer.className = 'flying-img';
+    document.body.appendChild(flyer);
 
-      // target cart position
-      const cartBtn = document.querySelector('.cart-btn');
-      const cartRect = cartBtn.getBoundingClientRect();
-      const targetX = cartRect.left + cartRect.width / 2 - startRect.width / 2;
-      const targetY = cartRect.top + cartRect.height / 2 - startRect.height / 2;
+    // position flyer at image/button
+    const startRect = (img && img.getBoundingClientRect()) || btn.getBoundingClientRect();
+    flyer.style.left = startRect.left + 'px';
+    flyer.style.top = startRect.top + 'px';
+    flyer.style.width = startRect.width + 'px';
+    flyer.style.height = startRect.height + 'px';
 
-      // calculate distance for consistent animation speed
-      const deltaX = targetX - startRect.left;
-      const deltaY = targetY - startRect.top;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const speed = 800; // pixels per second
-      const duration = Math.max(400, distance / speed * 1000); // minimum 400ms
+    // target cart position
+    const cartBtn = document.querySelector('.cart-btn');
+    const cartRect = cartBtn.getBoundingClientRect();
+    const targetX = cartRect.left + cartRect.width / 2 - startRect.width / 2;
+    const targetY = cartRect.top + cartRect.height / 2 - startRect.height / 2;
 
-      // force reflow then animate
-      requestAnimationFrame(() => {
-        flyer.style.transition = `all ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-        flyer.style.transform = `translate(${targetX - startRect.left}px, ${targetY - startRect.top}px) scale(0.2)`;
-        flyer.style.opacity = '0.6';
-      });
+    // calculate distance for consistent animation speed
+    const deltaX = targetX - startRect.left;
+    const deltaY = targetY - startRect.top;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const speed = 800; // pixels per second
+    const duration = Math.max(400, distance / speed * 1000); // minimum 400ms
 
-      // on transition end, remove flyer and add to cart
-      flyer.addEventListener('transitionend', function () {
-        flyer.remove();
-        const items = loadCart();
-        items.push({ name: name, price: price, image: image });
-        saveCart(items);
-
-        // small bounce effect on cart
-        cartBtn.animate([
-          { transform: 'scale(1)' },
-          { transform: 'scale(1.15)' },
-          { transform: 'scale(1)' }
-        ], { duration: 300 });
-
-        // Check for upselling suggestion
-        if (upsellingSuggestions[name]) {
-          showUpsellingSuggestion(upsellingSuggestions[name]);
-        }
-      }, { once: true });
+    // force reflow then animate
+    requestAnimationFrame(() => {
+      flyer.style.transition = `all ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+      flyer.style.transform = `translate(${targetX - startRect.left}px, ${targetY - startRect.top}px) scale(0.2)`;
+      flyer.style.opacity = '0.6';
     });
+
+    // on transition end, remove flyer and add to cart
+    flyer.addEventListener('transitionend', function () {
+      flyer.remove();
+      const items = loadCart();
+      items.push({ name: name, price: price, image: image });
+      saveCart(items);
+
+      // small bounce effect on cart
+      cartBtn.animate([
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.15)' },
+        { transform: 'scale(1)' }
+      ], { duration: 300 });
+
+      // Check for upselling suggestion
+      if (upsellingSuggestions[name]) {
+        showUpsellingSuggestion(upsellingSuggestions[name]);
+      }
+    }, { once: true });
   });
 
   // init
