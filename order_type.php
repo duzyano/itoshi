@@ -99,7 +99,6 @@ include 'includes/language.php';
       </div>
     </div>
   </main>
-  <?php include 'includes/footer.php'; ?>
   <script src="assets/language.js"></script>
 </body>
 

@@ -20,6 +20,15 @@ const translations = {
         'vegan': 'Vegan',
         'vegetarian': 'Vegetarian',
         'meat': 'Meat',
+        // upsell modal keys
+        'upsell_prompt_title': 'Add another drink?',
+        'upsell_prompt_description': 'Choose an extra drink or just add the item.',
+        'upsell_skip': 'Add only item',
+        'upsell_cancel': 'Cancel',
+        'perfect_pairing_title': 'Perfect pairing!',
+        'perfect_pairing_suggestion': 'We suggest:',
+        'upsell_accept': 'Yes, add it!',
+        'upsell_decline': 'No thanks',
     },
     'nl': {
         'no_products': 'Geen producten beschikbaar.',
@@ -39,7 +48,17 @@ const translations = {
         'vegan': 'Veganistisch',
         'vegetarian': 'Vegetarisch',
         'meat': 'Vlees',
+        // upsell modal keys
+        'upsell_prompt_title': 'Voeg nog een drankje toe?',
+        'upsell_prompt_description': 'Kies een extra drankje of voeg alleen het product toe.',
+        'upsell_skip': 'Alleen toevoegen',
+        'upsell_cancel': 'Annuleer',
+        'perfect_pairing_title': 'Perfecte combinatie!',
+        'perfect_pairing_suggestion': 'Wij suggereren:',
+        'upsell_accept': 'Ja, voeg het toe!',
+        'upsell_decline': 'Nee bedankt',
     },
+    
     'fr': {
         'no_products': 'Aucun produit disponible.',
         'loading_products': 'Chargement des produits...',
@@ -58,7 +77,17 @@ const translations = {
         'vegan': 'Végan',
         'vegetarian': 'Végétarien',
         'meat': 'Viande',
-    },
+        // upsell modal keys
+
+        'upsell_prompt_title': 'Ajouter une autre boisson ?',
+        'upsell_prompt_description': 'Choisissez une boisson supplémentaire ou ajoutez simplement l\'article.',
+        'upsell_skip': 'Ajouter seulement l\'article',
+        'upsell_cancel': 'Annuler',
+        'perfect_pairing_title': 'Accord parfait !',
+        'perfect_pairing_suggestion': 'Nous suggérons :',
+        'upsell_accept': 'Oui, ajoutez-le !',
+        'upsell_decline': 'Non merci'
+        }
 };
 
 // Get current language from cookie or local storage

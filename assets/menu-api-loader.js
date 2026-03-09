@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         // Get current language
         let currentLang = window.currentLanguage || localStorage.getItem('hh_language') || document.documentElement.lang || 'nl';
+        // make available to helpers outside this block
+        window.currentLang = currentLang;
         
         // Fetch products from API
         const response = await fetch('api/index.php/products?limit=100');
@@ -24,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // If no products grouped, render flat list
         if (Object.keys(groupedProducts).length === 0) {
-            menuContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Geen producten beschikbaar.</p>';
+            menuContainer.innerHTML = `<p style="text-align: center; padding: 40px;">${t('no_products', currentLang)}</p>`;
             return;
         }
         
@@ -263,8 +265,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         
     } catch (error) {
         console.error('Error loading products:', error);
-        menuContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: #c00;">
-            <p>Error laden van producten: ${escapeHtml(error.message)}</p>
+        const lang = window.currentLang || 'nl';
+    menuContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: #c00;">
+            <p>${t('loading_products', lang)}<br>${escapeHtml(error.message)}</p>
         </div>`;
     }
 });
@@ -276,7 +279,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 function attachAddToCartListeners() {
     const addButtons = document.querySelectorAll('.add-btn');
     addButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(ev) {
+            // prevent kiosk.js handler from seeing the original click
+            ev.stopPropagation();
             const mainName = this.dataset.name;
             const mainPrice = parseFloat(this.dataset.price);
             const mainImage = this.dataset.image;
@@ -368,12 +373,12 @@ function showUpsellModal(mainProduct, options) {
     modal.innerHTML = `
         <div class="hh-upsell-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:9999;">
             <div class="hh-upsell-box" style="background:#fff;padding:20px;border-radius:10px;max-width:420px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.2);">
-                <h3 style="margin:0 0 8px;">Wil je nog een drankje erbij?</h3>
-                <p style="margin:0 0 12px;color:#444;">Kies een extra drankje of voeg alleen het product toe.</p>
+                <h3 style="margin:0 0 8px;">${t('upsell_prompt_title', window.currentLang)}</h3>
+                <p style="margin:0 0 12px;color:#444;">${t('upsell_prompt_description', window.currentLang)}</p>
                 <div class="hh-upsell-options" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
                 <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <button id="hh-upsell-skip" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#f6f6f6;">Alleen toevoegen</button>
-                    <button id="hh-upsell-cancel" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;">Annuleer</button>
+                    <button id="hh-upsell-skip" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#f6f6f6;">${t('upsell_skip', window.currentLang)}</button>
+                    <button id="hh-upsell-cancel" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;">${t('upsell_cancel', window.currentLang)}</button>
                 </div>
             </div>
         </div>
@@ -407,7 +412,7 @@ function showUpsellModal(mainProduct, options) {
         left.appendChild(info);
 
         const btn = document.createElement('button');
-        btn.textContent = 'Voeg toe';
+        btn.textContent = t('add_to_cart', window.currentLang);
         btn.style.padding = '8px 12px';
         btn.style.borderRadius = '6px';
         btn.style.background = '#8cd003';

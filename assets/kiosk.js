@@ -1,203 +1,337 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const cartKey = 'hh_cart_v1';
+// kiosk.js - Unified cart system with localStorage and upselling
+const CART_KEY = 'hh_cart_v1';
 
-  // Upselling suggestions: map product names to suggested pairings
-  const upsellingSuggestions = {
-    'Oven-Baked Sweet Potato Wedges': { name: 'Avocado Lime Crema', price: 1.00, image: 'assets/images/image.png' },
-    'French Fries': { name: 'Avocado Lime Crema', price: 1.00, image: 'assets/images/image.png' },
-    'Spring Rolls': { name: 'Peanut Sauce', price: 0.75, image: 'assets/images/image.png' }
+let upsellRules = {};
+let allProducts = {}; // Store all products for category lookup
+
+function loadCart() {
+  try {
+    const stored = localStorage.getItem(CART_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error('Error loading cart:', e);
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  } catch (e) {
+    console.error('Error saving cart:', e);
+  }
+}
+
+let cart = loadCart();
+let currentUpsellQueue = [];
+
+function getCurrentLanguage() {
+  return localStorage.getItem('hh_language') || 'nl';
+}
+
+function setLanguage(lang) {
+  if(['en','nl','fr'].includes(lang)) {
+    localStorage.setItem('hh_language', lang);
+  }
+  renderCart();
+  renderMenuText();
+}
+
+function t(key, lang=null){
+  if(!lang) lang=getCurrentLanguage();
+  return translations[lang]?.[key] || translations['en']?.[key] || key;
+}
+
+// Dynamische upsell teksten gebaseerd op categorie
+function getUpsellTexts(upsellProductId) {
+  const lang = getCurrentLanguage();
+  const product = allProducts[upsellProductId];
+  
+  if (!product) {
+    return {
+      title: 'Wil je er dit bij?',
+      subtitle: 'Probeer dan de'
+    };
+  }
+
+  // Detecteer categorie uit product data
+  const category = product.category ? product.category.toLowerCase() : '';
+  
+  const categoryTexts = {
+    'nl': {
+      'drinks': {
+        title: 'Wil je er een drankje bij?',
+        subtitle: 'Probeer dan de'
+      },
+      'dips': {
+        title: 'Wil je een dip erbij?',
+        subtitle: 'Neem dan de'
+      },
+      'sides': {
+        title: 'Wil je er een bijgerecht bij?',
+        subtitle: 'Probeer dan de'
+      },
+      'default': {
+        title: 'Wil je er dit bij?',
+        subtitle: 'Klanten die dit bestelden, namen ook de'
+      }
+    },
+    'en': {
+      'drinks': {
+        title: 'Would you like a drink with that?',
+        subtitle: 'Try the'
+      },
+      'dips': {
+        title: 'Want to add a dip?',
+        subtitle: 'Try the'
+      },
+      'sides': {
+        title: 'Want to add a side?',
+        subtitle: 'Try the'
+      },
+      'default': {
+        title: 'Would you like this too?',
+        subtitle: 'Customers who ordered this also got the'
+      }
+    },
+    'fr': {
+      'drinks': {
+        title: 'Voulez-vous une boisson?',
+        subtitle: 'Essayez le'
+      },
+      'dips': {
+        title: 'Voulez-vous une sauce?',
+        subtitle: 'Essayez le'
+      },
+      'sides': {
+        title: 'Voulez-vous un accompagnement?',
+        subtitle: 'Essayez le'
+      },
+      'default': {
+        title: 'Voulez-vous ceci aussi?',
+        subtitle: 'Les clients qui ont commandé cela ont aussi pris le'
+      }
+    }
   };
 
-  function loadCart() {
-    try {
-      return JSON.parse(localStorage.getItem(cartKey)) || [];
-    } catch (e) {
-      return [];
-    }
+  const langTexts = categoryTexts[lang] || categoryTexts['nl'];
+  const texts = langTexts[category] || langTexts['default'];
+  
+  return texts;
+}
+
+function showUpsellModal(productId, productName, productPrice, productImage) {
+  if (!upsellRules[productId] || upsellRules[productId].length === 0) {
+    return;
   }
 
-  function saveCart(items) {
-    localStorage.setItem(cartKey, JSON.stringify(items));
-    updateCartUI();
+  const upsells = upsellRules[productId];
+  currentUpsellQueue = [...upsells];
+  
+  showNextUpsell(productName);
+}
+
+function showNextUpsell(originalProductName) {
+  if (currentUpsellQueue.length === 0) {
+    return;
   }
 
-  function updateCartUI() {
-    const items = loadCart();
-    const countEl = document.getElementById('cart-count');
-    const dropdown = document.getElementById('cart-dropdown');
-    const itemsEl = document.getElementById('cart-items');
-    if (!countEl || !itemsEl) return;
-    countEl.textContent = items.length;
-    if (items.length === 0) {
-      itemsEl.innerHTML = 'Je winkelwagen is leeg.';
-    } else {
-      itemsEl.innerHTML = '';
-      items.forEach((it, idx) => {
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `
-          <img src="${escapeHtml(it.image)}" alt="${escapeHtml(it.name)}">
-          <div class="ci-meta">
-            <div class="ci-name">${escapeHtml(it.name)}</div>
-            <div class="ci-price">€${Number(it.price).toFixed(2)}</div>
-          </div>
-          <button class="ci-remove" data-idx="${idx}">✕</button>
-        `;
-        itemsEl.appendChild(div);
-      });
-    }
-  }
+  const upsell = currentUpsellQueue.shift();
+  const lang = getCurrentLanguage();
+  
+  const texts = getUpsellTexts(upsell.id);
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
-  }
+  const yesButton = lang === 'nl' ? 'Ja, toevoegen!' : lang === 'en' ? 'Yes, add it!' : 'Oui, ajouter!';
+  const noButton = lang === 'nl' ? 'Nee, bedankt' : lang === 'en' ? 'No, thanks' : 'Non, merci';
 
-  function showUpsellingSuggestion(suggestion) {
-    // Create backdrop
-    const backdrop = document.createElement('div');
-    backdrop.className = 'upsell-backdrop';
-    document.body.appendChild(backdrop);
+  const backdrop = document.createElement('div');
+  backdrop.className = 'upsell-backdrop';
 
-    // Create modal
-    const modal = document.createElement('div');
-    modal.className = 'upsell-modal';
-    modal.innerHTML = `
-      <div class="upsell-content">
-        <h3>Perfect pairing!</h3>
-        <p>We suggest:</p>
-        <div class="upsell-product">
-          <img src="${escapeHtml(suggestion.image)}" alt="${escapeHtml(suggestion.name)}">
-          <div class="upsell-info">
-            <div class="upsell-name">${escapeHtml(suggestion.name)}</div>
-            <div class="upsell-price">€${Number(suggestion.price).toFixed(2)}</div>
-          </div>
-        </div>
-        <div class="upsell-buttons">
-          <button class="upsell-accept">Yes, add it!</button>
-          <button class="upsell-decline">No thanks</button>
+  const modal = document.createElement('div');
+  modal.className = 'upsell-modal';
+
+  modal.innerHTML = `
+    <div class="upsell-content">
+      <h3>${texts.title}</h3>
+      <p>${texts.subtitle}</p>
+      
+      <div class="upsell-product">
+        <img src="${upsell.image}" alt="${upsell.name}">
+        <div class="upsell-info">
+          <div class="upsell-name">${upsell.name}</div>
+          <div class="upsell-desc">${upsell.description || ''}</div>
+          <div class="upsell-price">€${parseFloat(upsell.price).toFixed(2)}</div>
         </div>
       </div>
-    `;
-    document.body.appendChild(modal);
+      
+      <div class="upsell-buttons">
+        <button class="upsell-accept">${yesButton} ✓</button>
+        <button class="upsell-decline">${noButton}</button>
+      </div>
+    </div>
+  `;
 
-    // Accept button
-    modal.querySelector('.upsell-accept').addEventListener('click', function () {
-      const items = loadCart();
-      items.push({ name: suggestion.name, price: suggestion.price, image: suggestion.image });
-      saveCart(items);
-      closeUpsellModal(backdrop, modal);
+  document.body.appendChild(backdrop);
+  document.body.appendChild(modal);
+
+  modal.querySelector('.upsell-accept').addEventListener('click', () => {
+    cart.push({
+      name: upsell.name,
+      price: parseFloat(upsell.price),
+      image: upsell.image
     });
+    saveCart(cart);
+    renderCart();
 
-    // Decline button
-    modal.querySelector('.upsell-decline').addEventListener('click', function () {
-      closeUpsellModal(backdrop, modal);
-    });
-
-    // Close on backdrop click
-    backdrop.addEventListener('click', function () {
-      closeUpsellModal(backdrop, modal);
-    });
-  }
-
-  function closeUpsellModal(backdrop, modal) {
-    modal.remove();
     backdrop.remove();
+    modal.remove();
+
+    setTimeout(() => showNextUpsell(originalProductName), 300);
+  });
+
+  modal.querySelector('.upsell-decline').addEventListener('click', () => {
+    backdrop.remove();
+    modal.remove();
+
+    setTimeout(() => showNextUpsell(originalProductName), 300);
+  });
+
+  backdrop.addEventListener('click', () => {
+    backdrop.remove();
+    modal.remove();
+    currentUpsellQueue = [];
+  });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  try {
+    const upsellData = document.getElementById('upsell-data');
+    if (upsellData) {
+      upsellRules = JSON.parse(upsellData.textContent);
+      console.log('Upsell rules loaded:', upsellRules);
+      
+      // Build product lookup map from upsell data
+      Object.values(upsellRules).forEach(upsellList => {
+        upsellList.forEach(upsell => {
+          allProducts[upsell.id] = upsell;
+        });
+      });
+      
+      console.log('Products indexed:', allProducts);
+    }
+  } catch (e) {
+    console.error('Error loading upsell rules:', e);
   }
 
-  // Remove item handler
-  document.body.addEventListener('click', function (e) {
-    if (e.target.classList.contains('ci-remove')) {
-      e.stopPropagation(); // Prevent dropdown close
-      const idx = Number(e.target.dataset.idx);
-      const items = loadCart();
-      items.splice(idx, 1);
-      saveCart(items);
-      return;
-    }
+  renderCart();
+  renderMenuText();
 
-    // Toggle dropdown
-    if (e.target.closest('.cart-btn')) {
-      const dd = document.getElementById('cart-dropdown');
-      if (!dd) return;
-      dd.classList.toggle('open');
-    } else {
-      // click outside closes dropdown
-      const dd = document.getElementById('cart-dropdown');
-      if (dd && !e.target.closest('.header-cart')) {
-        dd.classList.remove('open');
-      }
-    }
-  });
+  document.querySelectorAll('.add-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+      const price = parseFloat(btn.dataset.price);
+      const image = btn.dataset.image;
 
-  // Add button handler with event delegation - works with dynamically loaded buttons
-  document.body.addEventListener('click', function (ev) {
-    const btn = ev.target.closest('.add-btn');
-    if (!btn) return;
+      cart.push({ name, price, image });
+      saveCart(cart);
+      renderCart();
+      
+      const originalText = btn.textContent;
+      const lang = getCurrentLanguage();
+      const addedText = lang === 'nl' ? 'Toegevoegd!' : lang === 'en' ? 'Added!' : 'Ajouté!';
+      
+      btn.textContent = '✓ ' + addedText;
+      btn.style.background = '#053631';
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+      }, 1000);
 
-    const name = btn.dataset.name || 'Product';
-    const price = btn.dataset.price || 0;
-    const image = btn.dataset.image || 'assets/images/image.png';
-
-    // find product image to clone
-    const card = btn.closest('.product-card');
-    const img = card ? card.querySelector('img') : null;
-    let imgSrc = image;
-    if (img && img.src) imgSrc = img.src;
-
-    // create flying image
-    const flyer = document.createElement('img');
-    flyer.src = imgSrc;
-    flyer.className = 'flying-img';
-    document.body.appendChild(flyer);
-
-    // position flyer at image/button
-    const startRect = (img && img.getBoundingClientRect()) || btn.getBoundingClientRect();
-    flyer.style.left = startRect.left + 'px';
-    flyer.style.top = startRect.top + 'px';
-    flyer.style.width = startRect.width + 'px';
-    flyer.style.height = startRect.height + 'px';
-
-    // target cart position
-    const cartBtn = document.querySelector('.cart-btn');
-    const cartRect = cartBtn.getBoundingClientRect();
-    const targetX = cartRect.left + cartRect.width / 2 - startRect.width / 2;
-    const targetY = cartRect.top + cartRect.height / 2 - startRect.height / 2;
-
-    // calculate distance for consistent animation speed
-    const deltaX = targetX - startRect.left;
-    const deltaY = targetY - startRect.top;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    const speed = 800; // pixels per second
-    const duration = Math.max(400, distance / speed * 1000); // minimum 400ms
-
-    // force reflow then animate
-    requestAnimationFrame(() => {
-      flyer.style.transition = `all ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-      flyer.style.transform = `translate(${targetX - startRect.left}px, ${targetY - startRect.top}px) scale(0.2)`;
-      flyer.style.opacity = '0.6';
+      setTimeout(() => {
+        showUpsellModal(id, name, price, image);
+      }, 800);
     });
-
-    // on transition end, remove flyer and add to cart
-    flyer.addEventListener('transitionend', function () {
-      flyer.remove();
-      const items = loadCart();
-      items.push({ name: name, price: price, image: image });
-      saveCart(items);
-
-      // small bounce effect on cart
-      cartBtn.animate([
-        { transform: 'scale(1)' },
-        { transform: 'scale(1.15)' },
-        { transform: 'scale(1)' }
-      ], { duration: 300 });
-
-      // Check for upselling suggestion
-      if (upsellingSuggestions[name]) {
-        showUpsellingSuggestion(upsellingSuggestions[name]);
-      }
-    }, { once: true });
   });
 
-  // init
-  updateCartUI();
+  document.querySelectorAll('.lang-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>setLanguage(btn.dataset.lang));
+  });
 });
+
+function renderCart(){
+  const lang = getCurrentLanguage();
+  const liveCart = document.getElementById('live-cart');
+  if(!liveCart) return;
+
+  const emptyText = lang === 'nl' ? 'Je winkelwagen is leeg' : lang === 'en' ? 'Your cart is empty' : 'Votre panier est vide';
+  
+  if(!cart.length){
+    liveCart.innerHTML = `<p>${emptyText}</p>`;
+    return;
+  }
+
+  const itemCounts = {};
+  cart.forEach(item => {
+    if (!itemCounts[item.name]) {
+      itemCounts[item.name] = {
+        ...item,
+        quantity: 0
+      };
+    }
+    itemCounts[item.name].quantity++;
+  });
+
+  const removeText = lang === 'nl' ? 'Verwijder' : lang === 'en' ? 'Remove' : 'Retirer';
+  const subtotalText = lang === 'nl' ? 'Subtotaal' : lang === 'en' ? 'Subtotal' : 'Sous-total';
+  const cartText = lang === 'nl' ? 'Bekijk winkelwagen' : lang === 'en' ? 'View cart' : 'Voir le panier';
+
+  let html = '<ul class="cart-items">';
+  Object.values(itemCounts).forEach(item => {
+    const totalPrice = item.price * item.quantity;
+    html += `<li>
+      <img src="${item.image}" alt="${item.name}">
+      <strong>${item.name}</strong> x ${item.quantity} (€${totalPrice.toFixed(2)})
+      <button class="remove-btn" data-name="${item.name}">${removeText}</button>
+    </li>`;
+  });
+  html += '</ul>';
+  
+  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+  html += `<div class="cart-summary-mini">
+    <p><strong>${subtotalText}:</strong> €${subtotal.toFixed(2)}</p>
+  </div>`;
+  
+  html += `<div class="cart-actions">
+    <a href="shoppingcart.php" class="checkout-btn">${cartText}</a>
+  </div>`;
+
+  liveCart.innerHTML = html;
+
+  document.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const nameToRemove = btn.dataset.name;
+      const index = cart.findIndex(item => item.name === nameToRemove);
+      if (index > -1) {
+        cart.splice(index, 1);
+        saveCart(cart);
+        renderCart();
+      }
+    });
+  });
+}
+
+function renderMenuText(){
+  const lang = getCurrentLanguage();
+  const addText = lang === 'nl' ? 'Toevoegen' : lang === 'en' ? 'Add' : 'Ajouter';
+  
+  document.querySelectorAll('.section-title').forEach(section => {
+    const key = section.dataset.category;
+    section.textContent = t(key, lang);
+  });
+  
+  document.querySelectorAll('.add-btn').forEach(btn => {
+    btn.textContent = addText;
+  });
+}

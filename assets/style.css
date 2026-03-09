@@ -11,8 +11,8 @@
 @font-face {
   font-family: 'Renos-Rough';
   src: url('fonts/renos-rough-webfont.woff2') format('woff2'),
-       url('fonts/renos-rough-webfont.woff') format('woff'),
-       url('fonts/renos-rough.ttf') format('truetype');
+    url('fonts/renos-rough-webfont.woff') format('woff'),
+    url('fonts/renos-rough.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -28,73 +28,61 @@ body {
   margin: 0;
   font-family: 'Noto Sans', system-ui, -apple-system, 'Segoe UI', Roboto, "Helvetica Neue", Arial;
   color: var(--dark-blue);
-  background: var(--bg);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .hero {
+  position: relative;
   text-align: center;
   max-width: 760px;
   padding: 48px 24px;
+  z-index: 2;
 }
 
-/* Logo/leaf container */
-.logo-wrap {
-  position: relative;
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+#bg-carousel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
 }
 
-.leaf {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: var(--green);
-  display: inline-grid;
-  place-items: center;
-  box-shadow: 0 8px 24px rgba(5, 54, 49, 0.08);
-  transform-origin: center center;
-  animation: leafToLogo 2.4s cubic-bezier(.2, .9, .2, 1) forwards;
+.bg-slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 1.5s ease;
 }
 
-.leaf svg {
-  width: 56px;
-  height: 56px;
-  display: block;
+.bg-slide.active {
+  opacity: 1;
+  animation: zoomBg 8s ease forwards;
 }
 
-@keyframes leafToLogo {
-  0% {
-    transform: translateY(0) scale(1) rotate(0);
-    opacity: 1
+@keyframes zoomBg {
+  from {
+    transform: scale(1);
   }
 
-  35% {
-    transform: translateY(-18px) scale(1.08) rotate(-6deg)
-  }
-
-  65% {
-    transform: translateY(-120px) scale(2.4) rotate(-10deg);
-  }
-
-  85% {
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(-160px) scale(0.06);
-    opacity: 0;
+  to {
+    transform: scale(1.08);
   }
 }
+
 
 /* Image that replaces/augments the leaf during animation */
 .logo-img {
-  width: 96px;
-  height: 96px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -112,14 +100,17 @@ body {
     transform: translate(-50%, -50%) scale(0.9) rotate(0deg);
     opacity: 0;
   }
+
   35% {
     transform: translate(-50%, -58%) scale(1.08) rotate(-6deg);
     opacity: 1;
   }
+
   65% {
     transform: translate(-50%, -120%) scale(1.12) rotate(-10deg);
     opacity: 1;
   }
+
   100% {
     transform: translate(-50%, -140%) scale(0.9) rotate(0deg);
     opacity: 1;
@@ -171,8 +162,8 @@ p.lead {
 
 footer {
   margin-top: 26px;
-  font-size: 13px;
-  color: rgba(5, 54, 49, 0.55)
+  font-size: 20px;
+  color: orange
 }
 
 /* Responsive tweaks */
@@ -182,8 +173,8 @@ footer {
   }
 
   .leaf {
-    width: 76px;
-    height: 76px
+    width: 110px;
+    height: 110px
   }
 }
 
@@ -382,6 +373,8 @@ footer {
   width: 100%;
   cursor: pointer;
   transition: all 0.2s ease;
+  /* allow wrapping for translated text */
+  white-space: normal;
   flex-shrink: 0;
   touch-action: manipulation;
 }
