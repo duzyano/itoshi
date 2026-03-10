@@ -21,85 +21,54 @@ if (!is_array($cart))
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?php echo t('order_review'); ?> - Happy Herbivore</title>
     <link rel="stylesheet" href="assets/menu.css">
-    <style>
-        .review-container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-
-        .review-item {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .review-item img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px
-        }
-
-        .review-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px
-        }
-
-        .btn {
-            padding: 12px 18px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none
-        }
-
-        .btn-back {
-            background: #ddd;
-            color: #053631
-        }
-
-        .btn-confirm {
-            background: #8cd003;
-            color: #fff
-        }
-    </style>
 </head>
 
 <body class="menu-page">
     <?php include 'includes/header.php'; ?>
     <main class="menu-main">
         <div class="review-container">
-            <h2><?php echo t('order_review'); ?></h2>
-            <?php if (count($cart) === 0): ?>
-                <p><?php echo t('empty_cart'); ?> <a href="menu.php"><?php echo t('back_to_menu'); ?></a></p>
-            <?php else: ?>
-                <?php foreach ($cart as $it): ?>
-                    <div class="review-item">
-                        <img src="<?php echo htmlspecialchars($it['image'] ?? 'assets/images/image.png'); ?>"
-                            alt="<?php echo htmlspecialchars($it['name'] ?? 'Product'); ?>">
-                        <div>
-                            <div style="font-weight:700"><?php echo htmlspecialchars($it['name'] ?? 'Product'); ?></div>
-                            <div style="color:#666">€<?php echo number_format(floatval($it['price'] ?? 0), 2); ?></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+            <div class="review-header">
+                <h2><?php echo t('order_review'); ?></h2>
+                <p>Review your order before confirming</p>
+            </div>
 
-                <div style="margin-top:18px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <strong><?php echo t('subtotal'); ?></strong><span>€<?php echo number_format($subtotal, 2); ?></span></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <strong><?php echo t('delivery_cost'); ?></strong><span>€<?php echo number_format($delivery, 2); ?></span></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1.1rem;">
-                        <strong><?php echo t('total'); ?></strong><span>€<?php echo number_format($total, 2); ?></span></div>
+            <?php if (count($cart) === 0): ?>
+                <div class="empty-cart-message">
+                    <p><?php echo t('empty_cart'); ?></p>
+                    <a href="menu.php"><?php echo t('back_to_menu'); ?></a>
+                </div>
+            <?php else: ?>
+                <div class="review-items-wrapper">
+                    <?php foreach ($cart as $it): ?>
+                        <div class="review-item">
+                            <img src="<?php echo htmlspecialchars($it['image'] ?? 'assets/images/image.png'); ?>"
+                                alt="<?php echo htmlspecialchars($it['name'] ?? 'Product'); ?>">
+                            <div class="review-item-info">
+                                <div class="review-item-name"><?php echo htmlspecialchars($it['name'] ?? 'Product'); ?></div>
+                                <div class="review-item-price">€<?php echo number_format(floatval($it['price'] ?? 0), 2); ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <strong><?php echo t('subtotal'); ?></strong>
+                        <span>€<?php echo number_format($subtotal, 2); ?></span>
+                    </div>
+                    <div class="summary-row">
+                        <strong><?php echo t('delivery_cost'); ?></strong>
+                        <span>€<?php echo number_format($delivery, 2); ?></span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <strong><?php echo t('total'); ?></strong>
+                        <span>€<?php echo number_format($total, 2); ?></span>
+                    </div>
                 </div>
 
                 <div class="review-actions">
                     <button class="btn btn-back" onclick="window.history.back()"><?php echo t('back'); ?></button>
-                    <form method="post" action="order_confirmation.php" style="margin:0">
+                    <form method="post" action="order_confirmation.php" style="margin:0; flex: 1;">
                         <input type="hidden" name="cart_json"
                             value="<?php echo htmlspecialchars($cartJson, ENT_QUOTES); ?>">
                         <input type="hidden" name="subtotal"
@@ -108,13 +77,12 @@ if (!is_array($cart))
                             value="<?php echo htmlspecialchars(number_format($delivery, 2, '.', ''), ENT_QUOTES); ?>">
                         <input type="hidden" name="total"
                             value="<?php echo htmlspecialchars(number_format($total, 2, '.', ''), ENT_QUOTES); ?>">
-                        <button type="submit" class="btn btn-confirm"><?php echo t('confirm_order'); ?></button>
+                        <button type="submit" class="btn btn-confirm" style="width: 100%;"><?php echo t('confirm_order'); ?></button>
                     </form>
                 </div>
             <?php endif; ?>
         </div>
     </main>
-    <?php include 'includes/footer.php'; ?>
     <script src="assets/language.js"></script>
 </body>
 
