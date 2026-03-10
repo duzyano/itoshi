@@ -1,4 +1,4 @@
-// kiosk.js - Unified cart system with localStorage and upselling
+// kiosk.js - Unified cart system with localStorage and upselling + Category Filtering
 const CART_KEY = 'hh_cart_v1';
 
 let upsellRules = {};
@@ -203,7 +203,70 @@ function showNextUpsell(originalProductName) {
   });
 }
 
+// ===== CATEGORY FILTERING FUNCTION =====
+function initCategoryFiltering() {
+  const categoryButtons = document.querySelectorAll('.category-btn');
+  const menuSections = document.querySelectorAll('.menu-section');
+  
+  if (categoryButtons.length === 0 || menuSections.length === 0) {
+    console.warn('Category buttons or sections not found');
+    return;
+  }
+
+  // Set first category as active by default
+  if (categoryButtons.length > 0) {
+    categoryButtons[0].classList.add('active');
+    const firstCategory = categoryButtons[0].getAttribute('data-category');
+    
+    // Hide all sections except the first one
+    menuSections.forEach(section => {
+      const sectionCategory = section.getAttribute('data-category');
+      if (sectionCategory === firstCategory) {
+        section.classList.remove('hidden');
+      } else {
+        section.classList.add('hidden');
+      }
+    });
+  }
+
+  // Add click handlers to category buttons
+  categoryButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const selectedCategory = button.getAttribute('data-category');
+      
+      console.log('Category clicked:', selectedCategory);
+      
+      // Update active button
+      categoryButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      
+      // Show/hide sections
+      menuSections.forEach(section => {
+        const sectionCategory = section.getAttribute('data-category');
+        if (sectionCategory === selectedCategory) {
+          section.classList.remove('hidden');
+          section.style.opacity = '0';
+          setTimeout(() => {
+            section.style.opacity = '1';
+          }, 10);
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+
+      // Smooth scroll to top of menu
+      const menuMain = document.querySelector('.menu-main');
+      if (menuMain) {
+        menuMain.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', ()=>{
+  // ===== INITIALIZE CATEGORY FILTERING =====
+  initCategoryFiltering();
+  
   try {
     const upsellData = document.getElementById('upsell-data');
     if (upsellData) {

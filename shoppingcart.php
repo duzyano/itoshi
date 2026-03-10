@@ -46,7 +46,7 @@ try {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title><?php echo t('shopping_cart'); ?> - Happy Herbivore</title>
+  <title>Cart - Happy Herbivore</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/menu.css">
   <link rel="stylesheet" href="assets/cart.css">
@@ -56,67 +56,43 @@ try {
   <?php include 'includes/header.php'; ?>
 
   <main class="menu-main">
-    <div class="cart-page-header">
-      <h1><?php echo t('shopping_cart'); ?></h1>
-      <p>Review your items before checkout</p>
-    </div>
-
     <div class="cart-container">
       <div class="cart-items-section">
-        <div class="cart-items-header">
-          <h2><?php echo t('your_items'); ?></h2>
-          <span id="item-count" class="item-count">0 items</span>
-        </div>
+        <h2>Cart</h2>
         <div id="cart-list"></div>
       </div>
 
-      <div class="cart-summary-wrapper">
-        <div class="cart-summary">
-          <h3 class="summary-title"><?php echo t('order_summary'); ?></h3>
-          
-          <div class="summary-row">
-            <span><?php echo t('subtotal'); ?></span>
-            <span id="subtotal">€0.00</span>
-          </div>
-          <div class="summary-row">
-            <span><?php echo t('delivery_cost'); ?></span>
-            <span id="delivery">€0.00</span>
-          </div>
-          <div class="summary-row total">
-            <span><?php echo t('total'); ?></span>
-            <span id="total">€0.00</span>
-          </div>
-          
-          <form id="checkout-form" method="post" action="order_review.php">
-            <input type="hidden" name="cart_json" id="cart-json" value="">
-            <input type="hidden" name="subtotal" id="form-subtotal" value="">
-            <input type="hidden" name="delivery" id="form-delivery" value="">
-            <input type="hidden" name="total" id="form-total" value="">
-            <button type="button" id="checkout-btn" class="checkout-btn">
-              <span class="btn-icon">🛒</span>
-              <?php echo t('proceed_to_checkout'); ?>
-            </button>
-          </form>
-          
-          <a href="menu.php" class="continue-shopping">
-            <span class="btn-icon">←</span>
-            <?php echo t('continue_shopping'); ?>
-          </a>
+      <div class="cart-summary">
+        <div class="summary-row">
+          <span><?php echo t('subtotal'); ?></span>
+          <span id="subtotal">€0.00</span>
         </div>
+        <div class="summary-row">
+          <span><?php echo t('delivery_cost'); ?></span>
+          <span id="delivery">€0.00</span>
+        </div>
+        <div class="summary-row total">
+          <span><?php echo t('total'); ?></span>
+          <span id="total">€0.00</span>
+        </div>
+        <form id="checkout-form" method="post" action="order_review.php">
+          <input type="hidden" name="cart_json" id="cart-json" value="">
+          <input type="hidden" name="subtotal" id="form-subtotal" value="">
+          <input type="hidden" name="delivery" id="form-delivery" value="">
+          <input type="hidden" name="total" id="form-total" value="">
+          <a href="menu.php" class="continue-shopping"
+            style="display:block; text-align:center; margin-bottom:12px;"><?php echo t('continue_shopping'); ?></a>
+          <button type="button" id="checkout-btn" class="checkout-btn"><?php echo t('checkout'); ?></button>
+        </form>
       </div>
     </div>
 
     <!-- Upselling Section -->
     <div class="upsell-container" id="upsell-container" style="display: none;">
-      <div class="upsell-header">
-        <h3 class="upsell-title">✨ <?php echo t('you_might_also_like'); ?></h3>
-        <p class="upsell-subtitle">Complete your order with these delicious additions</p>
-      </div>
+      <h3 class="upsell-title">You might also like</h3>
       <div class="upsell-grid" id="upsell-items"></div>
     </div>
   </main>
-
-  <?php include 'includes/footer.php'; ?>
 
   <!-- Upsell Data from Database -->
   <script id="upsell-data" type="application/json">
@@ -196,32 +172,17 @@ try {
       }[m]));
     }
 
-    // ----- Update item count -----
-    function updateItemCount(count) {
-      const itemCountEl = document.getElementById('item-count');
-      if (itemCountEl) {
-        itemCountEl.textContent = count + (count === 1 ? ' item' : ' items');
-      }
-    }
-
     // ----- Render Cart -----
     function renderCart() {
       const items = loadCart();
       const cartList = document.getElementById('cart-list');
       if (!cartList) return;
 
-      updateItemCount(items.length);
-
       if (items.length === 0) {
         cartList.innerHTML = `
           <div class="empty-cart">
-            <div class="empty-cart-icon">🛒</div>
-            <h3>Your cart is empty</h3>
-            <p>Start adding delicious vegan meals to your cart!</p>
-            <a href="menu.php" class="continue-shopping-big">
-              <span class="btn-icon">🌱</span>
-              Browse Menu
-            </a>
+            <p>${t('empty_cart', currentLang)}</p>
+            <a href="menu.php" class="continue-shopping">${t('back_to_menu', currentLang)}</a>
           </div>
         `;
         updateSummary(items);
@@ -234,16 +195,12 @@ try {
         const div = document.createElement('div');
         div.className = 'cart-item-row';
         div.innerHTML = `
-          <div class="cart-item-image">
-            <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">
-          </div>
+          <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">
           <div class="cart-item-details">
             <h4>${escapeHtml(item.name)}</h4>
             <span class="price">€${Number(item.price).toFixed(2)}</span>
           </div>
-          <button class="remove-btn" data-idx="${idx}" title="Remove item">
-            <span>✕</span>
-          </button>
+          <button class="remove-btn" data-idx="${idx}">✕</button>
         `;
         cartList.appendChild(div);
 
@@ -322,7 +279,6 @@ try {
         div.innerHTML = `
           <div class="upsell-card-image">
             <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}">
-            <div class="upsell-badge">Popular</div>
           </div>
           <div class="upsell-card-body">
             <h4 class="upsell-card-name">${escapeHtml(product.name)}</h4>
@@ -331,7 +287,7 @@ try {
               <span class="upsell-card-price">€${Number(product.price).toFixed(2)}</span>
               <button class="upsell-add-btn" data-id="${product.id}">
                 <span class="add-icon">+</span>
-                Add to Cart
+                Add
               </button>
             </div>
           </div>
@@ -347,15 +303,6 @@ try {
             image: product.image 
           });
           saveCart(updatedItems);
-          
-          // Visual feedback
-          const btn = div.querySelector('.upsell-add-btn');
-          btn.textContent = '✓ Added!';
-          btn.style.background = 'linear-gradient(135deg, #053631 0%, #0a5a4f 100%)';
-          setTimeout(() => {
-            btn.innerHTML = '<span class="add-icon">+</span> Add to Cart';
-            btn.style.background = '';
-          }, 1500);
         });
       });
     }
@@ -368,7 +315,7 @@ try {
       btn.addEventListener('click', () => {
         const items = loadCart();
         if (!items || items.length === 0) {
-          alert('Your cart is empty. Please add items before checkout.');
+          alert(t('empty_cart', currentLang));
           return;
         }
 
