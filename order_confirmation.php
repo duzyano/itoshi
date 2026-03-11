@@ -88,12 +88,69 @@ $orderNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
             <?php endif; ?>
 
             <div class="action-buttons">
+                <button onclick="printReceipt()" class="btn btn-secondary" style="background: linear-gradient(135deg, #ff7520 0%, #ff9147 100%);">
+                    <span style="font-size: 1.2rem;">🖨️</span> Print Bon
+                </button>
                 <a href="menu.php" class="btn btn-primary">Order Again</a>
-                <a href="home.php" class="btn btn-secondary">Back to Home</a>
+                <a href="index.php" class="btn btn-secondary">Back to Home</a>
             </div>
         </div>
     </main>
     <script src="assets/language.js"></script>
+  <script src="assets/printer.js"></script>
+  <script>
+    // Automatically print receipt on page load
+    window.addEventListener('load', async () => {
+      // Get order data from PHP
+      const orderData = {
+        orderNumber: '<?php echo $orderNumber; ?>',
+        items: <?php echo json_encode($cart); ?>,
+        subtotal: <?php echo $subtotal; ?>,
+        delivery: <?php echo $delivery; ?>,
+        total: <?php echo $total; ?>
+      };
+
+      // Wait a moment for page to fully load
+      setTimeout(async () => {
+        if (window.receiptPrinter && window.receiptPrinter.isSupported()) {
+          console.log('Attempting to print receipt...');
+          const result = await window.receiptPrinter.print(orderData);
+          
+          if (result.success) {
+            console.log('✓ Receipt printed successfully');
+          } else {
+            console.warn('Print failed:', result.message);
+            // Show user-friendly message
+            if (confirm('Bon printen mislukt. Wilt u de printer selecteren?')) {
+              await window.receiptPrinter.selectPrinter();
+              await window.receiptPrinter.print(orderData);
+            }
+          }
+        } else {
+          console.warn('USB printing not supported in this browser');
+        }
+      }, 1000);
+    });
+
+    // Manual print function for the button
+    async function printReceipt() {
+      const orderData = {
+        orderNumber: '<?php echo $orderNumber; ?>',
+        items: <?php echo json_encode($cart); ?>,
+        subtotal: <?php echo $subtotal; ?>,
+        delivery: <?php echo $delivery; ?>,
+        total: <?php echo $total; ?>
+      };
+
+      const result = await window.receiptPrinter.print(orderData);
+      
+      if (result.success) {
+        alert('✓ Bon succesvol geprint!');
+      } else {
+        alert('❌ Print fout: ' + result.message);
+      }
+    }
+  </script>
 </body>
 
 </html>
