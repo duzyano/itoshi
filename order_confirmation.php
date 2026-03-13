@@ -91,8 +91,8 @@ $orderNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
                 <button onclick="printReceipt()" class="btn btn-secondary" style="background: linear-gradient(135deg, #ff7520 0%, #ff9147 100%);">
                     <span style="font-size: 1.2rem;">🖨️</span> Print Bon
                 </button>
-                <a href="menu.php" class="btn btn-primary">Order Again</a>
-                <a href="index.php" class="btn btn-secondary">Back to Home</a>
+                <a href="home.php" class="btn btn-primary">Order Again</a>
+                <a href="home.php" class="btn btn-secondary">Back to Home</a>
             </div>
         </div>
     </main>
