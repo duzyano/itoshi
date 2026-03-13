@@ -99,40 +99,7 @@ $orderNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
     <script src="assets/language.js"></script>
   <script src="assets/printer.js"></script>
   <script>
-    // Automatically print receipt on page load
-    window.addEventListener('load', async () => {
-      // Get order data from PHP
-      const orderData = {
-        orderNumber: '<?php echo $orderNumber; ?>',
-        items: <?php echo json_encode($cart); ?>,
-        subtotal: <?php echo $subtotal; ?>,
-        delivery: <?php echo $delivery; ?>,
-        total: <?php echo $total; ?>
-      };
-
-      // Wait a moment for page to fully load
-      setTimeout(async () => {
-        if (window.receiptPrinter && window.receiptPrinter.isSupported()) {
-          console.log('Attempting to print receipt...');
-          const result = await window.receiptPrinter.print(orderData);
-          
-          if (result.success) {
-            console.log('✓ Receipt printed successfully');
-          } else {
-            console.warn('Print failed:', result.message);
-            // Show user-friendly message
-            if (confirm('Bon printen mislukt. Wilt u de printer selecteren?')) {
-              await window.receiptPrinter.selectPrinter();
-              await window.receiptPrinter.print(orderData);
-            }
-          }
-        } else {
-          console.warn('USB printing not supported in this browser');
-        }
-      }, 1000);
-    });
-
-    // Manual print function for the button
+    // Manual print function for the button (in case bon didn't print at review)
     async function printReceipt() {
       const orderData = {
         orderNumber: '<?php echo $orderNumber; ?>',
@@ -142,12 +109,32 @@ $orderNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
         total: <?php echo $total; ?>
       };
 
-      const result = await window.receiptPrinter.print(orderData);
-      
-      if (result.success) {
-        alert('✓ Bon succesvol geprint!');
-      } else {
-        alert('❌ Print fout: ' + result.message);
+      if (!window.receiptPrinter.isSupported()) {
+        alert('⚠️ Bonprinter niet ondersteund in deze browser.\nGebruik Chrome of Edge voor printen.');
+        return;
+      }
+
+      try {
+        const result = await window.receiptPrinter.print(orderData);
+        
+        if (result.success) {
+          alert('✓ Bon succesvol geprint!');
+        } else {
+          // If no printer, ask to select one
+          if (confirm('Geen printer gevonden.\n\nWilt u een printer selecteren?')) {
+            const selected = await window.receiptPrinter.selectPrinter();
+            if (selected) {
+              const retryResult = await window.receiptPrinter.print(orderData);
+              if (retryResult.success) {
+                alert('✓ Bon succesvol geprint!');
+              } else {
+                alert('❌ Print fout: ' + retryResult.message);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        alert('❌ Print fout: ' + error.message);
       }
     }
   </script>

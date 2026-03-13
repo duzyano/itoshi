@@ -306,25 +306,27 @@ body {
     background-color: #8cd003;
     color: #fff;
     border: none;
-    padding: 25px 30px;
-    border-radius: 2px;
-    font-weight: 650;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 700;
     display: block;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
     flex-shrink: 0;
     touch-action: manipulation;
+    box-shadow: 0 2px 8px rgba(140, 208, 3, 0.3);
 }
 
 .add-btn:hover {
     background-color: #053631;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 54, 49, 0.4);
 }
 
 .add-btn:active {
-    transform: scale(0.98);
+    transform: translateY(0);
 }
 
 /* Live Cart Styling */
@@ -404,6 +406,37 @@ body {
 .cart-summary-mini p {
     margin: 5px 0;
     color: #053631;
+}
+
+.cart-actions {
+    padding: 10px 0;
+    text-align: center;
+}
+
+.checkout-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #ff7520 0%, #ff9147 100%);
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 117, 32, 0.35);
+    text-align: center;
+}
+
+.checkout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 117, 32, 0.45);
+}
+
+.checkout-btn:active {
+    transform: translateY(0);
 }
 
 /* ===== IMPROVED UPSELLING MODAL ===== */

@@ -77,13 +77,46 @@ if (!is_array($cart))
                             value="<?php echo htmlspecialchars(number_format($delivery, 2, '.', ''), ENT_QUOTES); ?>">
                         <input type="hidden" name="total"
                             value="<?php echo htmlspecialchars(number_format($total, 2, '.', ''), ENT_QUOTES); ?>">
-                        <button type="submit" class="btn btn-confirm" style="width: 100%;"><?php echo t('confirm_order'); ?></button>
+                        <button type="button" onclick="confirmAndPrint()" class="btn btn-confirm" style="width: 100%;"><?php echo t('confirm_order'); ?></button>
                     </form>
                 </div>
             <?php endif; ?>
         </div>
     </main>
     <script src="assets/language.js"></script>
+    <script src="assets/printer.js"></script>
+    <script>
+        async function confirmAndPrint() {
+            // Get order data
+            const orderData = {
+                orderNumber: String(Math.floor(Math.random() * 10000)).padStart(4, '0'),
+                items: <?php echo $cartJson; ?>,
+                subtotal: <?php echo $subtotal; ?>,
+                delivery: <?php echo $delivery; ?>,
+                total: <?php echo $total; ?>
+            };
+
+            // Try to print receipt if printer available
+            let printed = false;
+            if (window.receiptPrinter && window.receiptPrinter.isSupported()) {
+                try {
+                    const hasDevice = await window.receiptPrinter.autoDetect();
+                    if (hasDevice) {
+                        const result = await window.receiptPrinter.print(orderData);
+                        if (result.success) {
+                            console.log('✓ Bon geprint!');
+                            printed = true;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Print overgeslagen:', error.message);
+                }
+            }
+
+            // Submit form to go to confirmation page
+            document.querySelector('form[action="order_confirmation.php"]').submit();
+        }
+    </script>
 </body>
 
 </html>

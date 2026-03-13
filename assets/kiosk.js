@@ -213,21 +213,12 @@ function initCategoryFiltering() {
     return;
   }
 
-  // Set first category as active by default
-  if (categoryButtons.length > 0) {
-    categoryButtons[0].classList.add('active');
-    const firstCategory = categoryButtons[0].getAttribute('data-category');
-    
-    // Hide all sections except the first one
-    menuSections.forEach(section => {
-      const sectionCategory = section.getAttribute('data-category');
-      if (sectionCategory === firstCategory) {
-        section.classList.remove('hidden');
-      } else {
-        section.classList.add('hidden');
-      }
-    });
-  }
+  let currentActiveCategory = null;
+
+  // Show all categories initially
+  menuSections.forEach(section => {
+    section.classList.remove('hidden');
+  });
 
   // Add click handlers to category buttons
   categoryButtons.forEach(button => {
@@ -236,28 +227,43 @@ function initCategoryFiltering() {
       
       console.log('Category clicked:', selectedCategory);
       
-      // Update active button
-      categoryButtons.forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-      
-      // Show/hide sections
-      menuSections.forEach(section => {
-        const sectionCategory = section.getAttribute('data-category');
-        if (sectionCategory === selectedCategory) {
+      // Toggle functionality: if clicking the same button, show all
+      if (currentActiveCategory === selectedCategory) {
+        // Show all categories
+        categoryButtons.forEach(btn => btn.classList.remove('active'));
+        menuSections.forEach(section => {
           section.classList.remove('hidden');
-          section.style.opacity = '0';
-          setTimeout(() => {
-            section.style.opacity = '1';
-          }, 10);
-        } else {
-          section.classList.add('hidden');
-        }
-      });
+          section.style.opacity = '1';
+        });
+        currentActiveCategory = null;
+        console.log('Showing all categories');
+      } else {
+        // Show only selected category
+        currentActiveCategory = selectedCategory;
+        
+        // Update active button
+        categoryButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Show/hide sections
+        menuSections.forEach(section => {
+          const sectionCategory = section.getAttribute('data-category');
+          if (sectionCategory === selectedCategory) {
+            section.classList.remove('hidden');
+            section.style.opacity = '0';
+            setTimeout(() => {
+              section.style.opacity = '1';
+            }, 10);
+          } else {
+            section.classList.add('hidden');
+          }
+        });
 
-      // Smooth scroll to top of menu
-      const menuMain = document.querySelector('.menu-main');
-      if (menuMain) {
-        menuMain.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Smooth scroll to top of menu
+        const menuMain = document.querySelector('.menu-main');
+        if (menuMain) {
+          menuMain.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     });
   });
